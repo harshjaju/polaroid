@@ -49,6 +49,10 @@ class Polaroid:
             logging.info('Buy successful. Selling')
             self._complete_trade(trade_requests['sell'], symbol)
             logging.info('Sell successful.')
+            with open('trades.txt', 'a') as ttxt:
+                ttxt.write(str(time.time()) + '   ')
+                ttxt.write(str(trade))
+                ttxt.write('\n\n')
 
     def infi(self):
         while True:
@@ -84,7 +88,7 @@ class Polaroid:
 
     def _get_profitable_pairs(self):
         # Hardcoded for now. Will figure out some data driven approach later
-        return [('ETHBTC', 3), ('IOTABTC',0), ('DASHBTC', 3), ('XRPBTC',0), ('ADABTC', 0), ('NEOBTC', 2), ('LSKBTC', 2), ('LTCBTC', 2), ('XMRBTC', 3)]
+        return [('ETHBTC', 3), ('IOTABTC',0), ('DASHBTC', 3), ('XRPBTC',0), ('NEOBTC', 2), ('LTCBTC', 2), ('XMRBTC', 3), ('BCCBTC', 3)]
 
     def _check_rate_limit(self, r):
         if r.status_code == 429:
