@@ -42,18 +42,23 @@ class Polaroid:
                 logging.info(f'{symbol} not profitable')
                 time.sleep(1)
                 continue
+                ttxt.write(str(trade) + '   ')
             logging.info(f'{symbol} is profitable')
             logging.info(str(trade))
             trade_requests = self.exchange.formulate_requests(symbol, trade, lot_size)
+            with open('trades.txt', 'a') as ttxt:
+                ttxt.write(str(time.time()) + '   ')
+                ttxt.write(symbol + '\n')
+                ttxt.write(str(trade_requests) + '\n')
             self._complete_trade(trade_requests['buy'], symbol)
+            with open('trades.txt', 'a') as ttxt:
+                ttxt.write('Buy successful\n')
             logging.info('Buy successful. Selling')
             self._complete_trade(trade_requests['sell'], symbol)
             logging.info('Sell successful.')
             with open('trades.txt', 'a') as ttxt:
                 ttxt.write(str(time.time()) + '   ')
-                ttxt.write(symbol + '  ')
-                ttxt.write(str(trade))
-                ttxt.write('\n\n')
+                ttxt.write('Sell sucessful\n\n')
 
     def infi(self):
         while True:
@@ -70,6 +75,10 @@ class Polaroid:
                 logging.info(f'order not ok. {order.status_code} {order.text}')
                 if not self._check_rate_limit(order):
                     # TODO 
+                    with open('trades.txt', 'a') as ttxt:
+                        ttxt.write('\n\n\n')
+                        ttxt.write(order.text)
+                        ttxt.write('\n\n\n')
                     raise RuntimeError
             order_ok = order.ok
         order_id = order.json()['orderId']
