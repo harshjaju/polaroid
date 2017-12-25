@@ -8,7 +8,7 @@ FEES_PERCENT = 0.25
 TRADE_VALUE = 0.005
 RATE_LIMIT_SLEEP = 30
 ORDER_STATUS_WAIT = 3
-CYCLE_SLEEP = 20
+CYCLE_SLEEP = 10
 
 
 class Polaroid:
@@ -51,6 +51,7 @@ class Polaroid:
             logging.info('Sell successful.')
             with open('trades.txt', 'a') as ttxt:
                 ttxt.write(str(time.time()) + '   ')
+                ttxt.write(symbol + '  ')
                 ttxt.write(str(trade))
                 ttxt.write('\n\n')
 
