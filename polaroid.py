@@ -4,7 +4,7 @@ import time
 from apis import Binance
 
 logging.basicConfig(format='%(asctime)s %(message)s', filename='logs.txt', level=logging.DEBUG)
-FEES_PERCENT = 0.25
+FEES_PERCENT = 0.3
 TRADE_VALUE = 0.005
 RATE_LIMIT_SLEEP = 30
 ORDER_STATUS_WAIT = 3
@@ -20,12 +20,12 @@ class Polaroid:
         if 'error' in book:
             #TODO Handle this fellow
             raise RuntimeError
-        ask = book['asks'][0]['price'] - .000001
-        bid = book['bids'][0]['price'] + .000001
+        ask = round(book['asks'][0]['price'] - .000001, 6)
+        bid = round(book['bids'][0]['price'] + .000001, 6)
         spread = (ask - bid) / ask * 100
         if spread < FEES_PERCENT:
-            return False
-        return self._mid_profit_rates(ask, bid)
+            return self._mid_profit_rates(ask, bid)
+        return {'bid': bid, 'ask': ask}
 
     def _mid_profit_rates(self, ask, bid):
         mid = (ask+bid) / 2
@@ -38,12 +38,6 @@ class Polaroid:
         pairs = self._get_profitable_pairs()
         for symbol, lot_size in pairs:
             trade = self._check_validity(symbol)
-            if not trade:
-                logging.info(f'{symbol} not profitable')
-                time.sleep(1)
-                continue
-                ttxt.write(str(trade) + '   ')
-            logging.info(f'{symbol} is profitable')
             logging.info(str(trade))
             trade_requests = self.exchange.formulate_requests(symbol, trade, lot_size)
             with open('trades.txt', 'a') as ttxt:
@@ -98,7 +92,7 @@ class Polaroid:
 
     def _get_profitable_pairs(self):
         # Hardcoded for now. Will figure out some data driven approach later
-        return [('ETHBTC', 3), ('IOTABTC',0), ('DASHBTC', 3), ('XRPBTC',0), ('NEOBTC', 2), ('LTCBTC', 2), ('XMRBTC', 3), ('BCCBTC', 3)]
+        return [('ETHBTC', 3), ('XRPBTC',0), ('LTCBTC', 2), ('BCCBTC', 3)]
 
     def _check_rate_limit(self, r):
         if r.status_code == 429:
