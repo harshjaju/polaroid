@@ -12,7 +12,8 @@ CYCLE_SLEEP = 1
 
 
 class Polaroid:
-    def __init__(self):
+    def __init__(self, pair):
+        self.pair = pair
         self.exchange = Binance()
 
     def _check_validity(self, symbol):
@@ -35,24 +36,26 @@ class Polaroid:
         return {'bid': buy, 'ask': sell}
 
     def print_money(self):
-        pairs = self._get_profitable_pairs()
-        for symbol, lot_size in pairs:
-            trade = self._check_validity(symbol)
-            logging.info(str(trade))
-            trade_requests = self.exchange.formulate_requests(symbol, trade, lot_size)
-            with open('trades.txt', 'a') as ttxt:
-                ttxt.write(str(time.time()) + '   ')
-                ttxt.write(symbol + '\n')
-                ttxt.write(str(trade_requests) + '\n')
-            self._complete_trade(trade_requests['buy'], symbol)
-            with open('trades.txt', 'a') as ttxt:
-                ttxt.write('Buy successful\n')
-            logging.info('Buy successful. Selling')
-            self._complete_trade(trade_requests['sell'], symbol)
-            logging.info('Sell successful.')
-            with open('trades.txt', 'a') as ttxt:
-                ttxt.write(str(time.time()) + '   ')
-                ttxt.write('Sell sucessful\n\n')
+        symbol, lot_size = self.pair
+        trade = self._check_validity(symbol)
+        logging.info(str(trade))
+        trade_requests = self.exchange.formulate_requests(symbol, trade, lot_size)
+        with open('trades.txt', 'a') as ttxt:
+            ttxt.write(str(time.time()) + '   ')
+            ttxt.write(symbol + '\n')
+            ttxt.write(str(trade_requests) + '\n')
+        self._complete_trade(trade_requests['buy'], symbol)
+        with open('trades.txt', 'a') as ttxt:
+            ttxt.write(str(time.time()) + '   ')
+            ttxt.write(symbol + '\n')
+            ttxt.write('Buy successful\n')
+        logging.info('Buy successful. Selling')
+        self._complete_trade(trade_requests['sell'], symbol)
+        logging.info('Sell successful.')
+        with open('trades.txt', 'a') as ttxt:
+            ttxt.write(str(time.time()) + '   ')
+            ttxt.write(symbol + '\n')
+            ttxt.write('Sell sucessful\n\n')
 
     def infi(self):
         while True:
@@ -62,6 +65,7 @@ class Polaroid:
 
     def _complete_trade(self, request, symbol):
         order_ok = False
+        # Place order
         while not order_ok:
             logging.info(f'making request {request}')
             order = self.exchange.execute_request(request)
@@ -79,6 +83,7 @@ class Polaroid:
         logging.info(f'order id: {order_id}')
         order_json = order.json()
         logging.info(str(order_json))
+        # Check if order is filled
         while order_json['status'].lower() != 'filled':
             logging.info(f'querying to see if order {order_id} is filled')
             order = self.exchange.query_order(symbol, order_id)
