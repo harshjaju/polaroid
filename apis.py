@@ -22,7 +22,7 @@ class Binance:
         return {'bids': bids, 'asks': asks}
 
     def formulate_requests(self, symbol, trades, lot_size, value=0.002):
-        quantity = round(value / trades['ask'], lot_size)
+        quantity = round(value / float(trades['ask']), lot_size)
         buy = f'symbol={symbol}&side=BUY&type=LIMIT&timeInForce=GTC&quantity={quantity}&price={trades["bid"]}'
         sell = f'symbol={symbol}&side=SELL&type=LIMIT&timeInForce=GTC&quantity={quantity}&price={trades["ask"]}'
         return {'buy': buy, 'sell': sell}

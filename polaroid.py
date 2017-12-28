@@ -21,23 +21,27 @@ class Polaroid:
         if 'error' in book:
             #TODO Handle this fellow
             raise RuntimeError
-        ask = round(book['asks'][0]['price'] - .000001, 6)
-        bid = round(book['bids'][0]['price'] + .000001, 6)
+        round_off = 8 if symbol == 'XRPBTC' else 6
+        ask = round(book['asks'][0]['price'] - .000001, round_off)
+        bid = round(book['bids'][0]['price'] + .000001, round_off)
         spread = (ask - bid) / ask * 100
         if spread < FEES_PERCENT:
-            return self._mid_profit_rates(ask, bid)
+            return self._mid_profit_rates(ask, bid, symbol)
         return {'bid': bid, 'ask': ask}
 
-    def _mid_profit_rates(self, ask, bid):
+    def _mid_profit_rates(self, ask, bid, symbol):
         mid = (ask+bid) / 2
         spread = FEES_PERCENT * ask / 100
-        buy = round(mid - (spread/2), 6)
-        sell = round(mid + (spread/2), 6)
+        round_off = 8 if symbol == 'XRPBTC' else 6
+        buy = round(mid - (spread/2), round_off)
+        sell = round(mid + (spread/2), round_off)
         return {'bid': buy, 'ask': sell}
 
     def print_money(self):
         symbol, lot_size = self.pair
         trade = self._check_validity(symbol)
+        trade['ask'] = format(trade['ask'], '.8f')
+        trade['bid'] = format(trade['bid'], '.8f')
         logging.info(str(trade))
         trade_requests = self.exchange.formulate_requests(symbol, trade, lot_size)
         with open('trades.txt', 'a') as ttxt:
