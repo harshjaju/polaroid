@@ -1,0 +1,1 @@
+/usr/bin/python3 /home/samhattangady/polaroid/ethpol.py &> eth_errs.txt

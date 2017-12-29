@@ -1,0 +1,1 @@
+/usr/bin/python3 /home/samhattangady/polaroid/ltcpol.py &> ltc_errs.txt

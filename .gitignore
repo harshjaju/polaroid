@@ -5,3 +5,5 @@ __pycache__/*
 credentials.py
 logs.txt
 trades.txt
+*_errs.txt
+*_trades.txt

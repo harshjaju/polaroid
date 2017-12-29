@@ -1,0 +1,1 @@
+/usr/bin/python3 /home/samhattangady/polaroid/bccpol.py &> bcc_errs.txt
