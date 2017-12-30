@@ -62,7 +62,7 @@ class Polaroid:
             if order_json.get('status').lower() == 'filled':
                 # Order has been executed
                 with open(f'{self.symbol}_trades.txt', 'a') as ttxt:
-                    ttxt.write(f'{str(datetime.datetime.now())} : BUY {self.trade["bid"]} successful')
+                    ttxt.write(f'{str(datetime.datetime.now())} : BUY {self.trade["bid"]} successful\n')
                 break
             print(f'{self.trade["mid"]} trades mid')
             if float(order_json.get('executedQty', '0')) > 0:
@@ -79,24 +79,24 @@ class Polaroid:
                     print(r.text)
                     continue
                 self._aggressive_buy()
-
+                break
 
     def _sell(self):
         req = self._formulate_sell_request()
         order_id = self._place_order(req)
         order_json = {'status' : 'new'}
         while order_json['status'].lower() != 'filled':
+            time.sleep(ORDER_STATUS_WAIT)
             logging.info(f'{self.symbol} querying to see if order {order_id} is filled')
             order = self.exchange.query_order(self.symbol, order_id)
             if not order.ok:
                 logging.info(order.text)
                 self._check_rate_limit(order)
                 continue
-            time.sleep(ORDER_STATUS_WAIT)
             order_json = order.json()
         # Order has been executed
         with open(f'{self.symbol}_trades.txt', 'a') as ttxt:
-            ttxt.write(f'{str(datetime.datetime.now())} : SELL {self.trade["ask"]} successful')
+            ttxt.write(f'{str(datetime.datetime.now())} : SELL {self.trade["ask"]} successful\n')
 
     def infi(self):
         while True:
@@ -105,12 +105,13 @@ class Polaroid:
             time.sleep(CYCLE_SLEEP)
 
     def _place_order(self, request):
+        print(f'Requesting: {request}')
+        logging.info(request)
         order_ok = False
         # Place order
         while not order_ok:
             logging.info(f'making request {request}')
             order = self.exchange.execute_request(request)
-            print(f'Requesting: {request}')
             if not order.ok:
                 logging.info(f'order not ok. {order.status_code} {order.text}')
                 if not self._check_rate_limit(order):
