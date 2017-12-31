@@ -9,6 +9,7 @@ FEES_PERCENT = 0.3
 RATE_LIMIT_SLEEP = 30
 ORDER_STATUS_WAIT = 3
 CYCLE_SLEEP = 1
+SQUARE_OFF_PERCENT = 5
 
 
 class Polaroid:
@@ -94,9 +95,33 @@ class Polaroid:
                 self._check_rate_limit(order)
                 continue
             order_json = order.json()
+            rates = self._get_trade_rate()
+            # square off if price has dropped by SQUARE_OFF_PERCENT
+            if (self.trade['mid'] - rates['mid']) / self.trade['mid'] * 100 > SQUARE_OFF_PERCENT:
+                self.exchange.delete_order(self.symbol, order_id)
+                self._square_off()
+                break
+        else:
+        # Order has been executed
+            with open(f'{self.symbol}_trades.txt', 'a') as ttxt:
+                ttxt.write(f'{str(datetime.datetime.now())} : SELL {self.trade["ask"]} successful\n')
+
+    def _square_off(self):
+        req = self._formulate_sell_request(square_off=True)
+        order_id = self._place_order(req)
+        order_json = {'status' : 'new'}
+        while order_json['status'].lower() != 'filled':
+            time.sleep(ORDER_STATUS_WAIT)
+            logging.info(f'{self.symbol} querying to see if order {order_id} is filled')
+            order = self.exchange.query_order(self.symbol, order_id)
+            if not order.ok:
+                logging.info(order.text)
+                self._check_rate_limit(order)
+                continue
+            order_json = order.json()
         # Order has been executed
         with open(f'{self.symbol}_trades.txt', 'a') as ttxt:
-            ttxt.write(f'{str(datetime.datetime.now())} : SELL {self.trade["ask"]} successful\n')
+            ttxt.write(f'{str(datetime.datetime.now())} : SQUARE_OFF {self.trade["bid"]} successful\n')
 
     def infi(self):
         while True:
@@ -145,9 +170,9 @@ class Polaroid:
         quantity = round(self.trade_value / float(self.trade['ask']), self.lot_size)
         return f'symbol={self.symbol}&side=BUY&type=LIMIT&timeInForce=GTC&quantity={quantity}&price={self.trade["bid"]}'
 
-    def _formulate_sell_request(self):
+    def _formulate_sell_request(self, square_off=False):
         self._format_rates()
         quantity = round(self.trade_value / float(self.trade['ask']), self.lot_size)
-        return f'symbol={self.symbol}&side=SELL&type=LIMIT&timeInForce=GTC&quantity={quantity}&price={self.trade["ask"]}'
-
+        price = self.trade['bid'] if square_off else self.trade['ask']
+        return f'symbol={self.symbol}&side=SELL&type=LIMIT&timeInForce=GTC&quantity={quantity}&price={price}'
 
